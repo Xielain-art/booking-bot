@@ -43,6 +43,8 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "4.12.0",
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@types/node": "^22.15.21",
     "eslint": "^9.27.0",
     "husky": "^9.1.7",
@@ -51,6 +53,6 @@
     "typescript": "^5.9.2"
   },
   "lint-staged": {
-    "*.ts": "eslint"
+    "*.{js,cjs,mjs,ts,tsx,vue,json,yaml,yml,md,html}": "eslint --fix"
   }
 }
