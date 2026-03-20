@@ -61,6 +61,7 @@ menu-no-active-shifts = 📭 Нет активных смен
 menu-upcoming-empty = 📭 Нет предстоящих записей
 menu-completed-empty = 📭 Нет выполненных записей
 menu-cancel-appointment = ❌ Отменить запись
+menu-reschedule-appointment = 🗓 Перенести запись
 menu-mark-completed = ✅ Запись выполнена
 menu-back-appointments = 🔙 Назад к списку записей
 
@@ -82,15 +83,33 @@ add-shift-db-error = 🔥 Ошибка БД при сохранении смен
 
 add-service-enter-name = 📝 <b>Введите название новой услуги:</b>
 default-service-name = Без названия
-add-service-enter-price = 💰 <b>Введите стоимость (только цифры):</b>
+add-service-enter-price = 💰 Введите стоимость услуги в рублях (например, 1500):
 add-service-enter-duration = ⏳ <b>Введите длительность в минутах:</b>
-add-service-success = ✅ Услуга <b>"{$name}"</b> добавлена!
+add-service-invalid-duration = ❌ Длительность должна быть числом больше 0. Попробуйте еще раз.
+add-service-invalid-price = ❌ Стоимость должна быть числом. Попробуйте еще раз.
+add-service-success = ✅ Услуга успешно добавлена!
 generic-error = ❌ Ошибка.
 
+reschedule-enter-date = 📅 <b>Перенос записи</b>
+    
+    Введите новую дату в формате <code>ДД.ММ.ГГГГ</code> (например, 25.12.2024):
+    <i>Отправьте "отмена" для выхода.</i>
+reschedule-invalid-date = ❌ Некорректный формат даты или слишком далекое будущее.
+    Пожалуйста, введите дату в формате <code>ДД.ММ.ГГГГ</code> (не более чем на год вперед).
+reschedule-no-slots = 📭 На указанную дату ({$date}) нет свободных слотов для услуг или смена еще не открыта.
+    Выберите другую дату `ДД.ММ.ГГГГ` или напишите "отмена".
+reschedule-choose-time = 🕒 <b>Свободные слоты на {$date}:</b>
+    
+    Пожалуйста, введите выбранное время (например, 14:00):
+    
+    Слоты:
+    {$slots}
+reschedule-invalid-time = ❌ Такого времени нет в списке свободных слотов. Попробуйте еще раз:
+reschedule-success = ✅ Успешно! Запись перенесена на <b>{$date}</b> в <b>{$time}</b>.
+
 edit-service-not-found = ❌ Ошибка: Услуга не найдена во временной памяти.
-edit-service-enter-price = 💰 <b>Введите новую стоимость услуги (только цифры):</b>
-    <i>Например: 2500</i>
-edit-service-invalid-number = ❌ Ошибка: Введите корректное число.
+edit-service-enter-price = 💰 Введите новую стоимость для услуги "<b>{$service}</b>" (в рублях):
+edit-service-invalid-number = ❌ Стоимость должна быть числом от 0. Попробуйте еще раз.
 edit-service-success = ✅ Цена успешно изменена на {$price}₽!
 edit-service-db-error = ❌ Ошибка обновления цены.
 
