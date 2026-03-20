@@ -12,10 +12,13 @@ export const TimeSchema = v.pipe(
 
 export const BookAppointmentInput = v.object({
   tgId: v.number(),
-  name: v.pipe(v.string(), v.minLength(1, 'Имя не может быть пустым')),
-  date: DateSchema,
-  time: TimeSchema,
-})
+  name: v.string(),
+  username: v.string(),  
+  phone: v.string(),        
+  date: DateSchema,        
+  time: TimeSchema,        
+  serviceId: v.number(),   
+});
 
 export const CreateShiftInput = v.object({
   date: DateSchema,

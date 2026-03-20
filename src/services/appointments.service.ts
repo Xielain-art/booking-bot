@@ -8,6 +8,7 @@ import {
   TimeSchema,
 } from '#root/schemas/appointments.schema.js'
 import * as v from 'valibot'
+import dayjs from 'dayjs'
 
 export const AppointmentService = {
   async getFreeSlots(dateRaw: string): Promise<string[]> {
@@ -25,10 +26,13 @@ export const AppointmentService = {
     const { data: isSuccess, error } = await supabase.rpc('book_appointment', {
       p_tg_id: valid.tgId,
       p_name: valid.name,
+      p_username: valid.username,   
+      p_phone: valid.phone,          
       p_date: valid.date,
       p_time: valid.time,
+      p_service_id: valid.serviceId, 
     })
-
+    
     if (error)
       throw new Error(`Ошибка записи: ${error.message}`)
     return isSuccess ?? false
@@ -75,13 +79,66 @@ export const AppointmentService = {
       throw new Error(`Ошибка создания смены: ${error.message}`)
   },
 
-  async getAppointmentsByDate(dateRaw: string) {
+  async getAppointmentsByDate(dateRaw: string): Promise<any[]> {
     const date = v.parse(DateSchema, dateRaw)
     const { data, error } = await supabase.rpc('get_appointments_by_date', { p_date: date })
 
     if (error)
       throw new Error(`Ошибка БД: ${error.message}`)
-    return v.parse(AdminAppointmentsListSchema, data || [])
+    
+    return data || []
+  },
+
+  async getAllUpcomingAppointments(page: number = 0, limit: number = 8): Promise<{ data: any[], count: number }> {
+    const today = dayjs().format('YYYY-MM-DD');
+    const start = page * limit;
+    const end = start + limit - 1;
+
+    const { data, error, count } = await supabase
+      .from('appointments')
+      .select('id, time_slot, client_name, client_username, client_phone, work_date, status, services(name, price, duration_minutes)', { count: 'exact' })
+      .gte('work_date', today)
+      .eq('status', 'active')
+      .order('work_date', { ascending: true })
+      .order('time_slot', { ascending: true })
+      .range(start, end);
+
+    if (error) throw new Error(`Ошибка БД: ${error.message}`);
+    return { data: data || [], count: count || 0 };
+  },
+
+  async getCompletedAppointments(page: number = 0, limit: number = 8): Promise<{ data: any[], count: number }> {
+    const start = page * limit;
+    const end = start + limit - 1;
+
+    const { data, error, count } = await supabase
+      .from('appointments')
+      .select('id, time_slot, client_name, client_username, client_phone, work_date, status, services(name, price, duration_minutes)', { count: 'exact' })
+      .eq('status', 'completed')
+      .order('work_date', { ascending: false })
+      .order('time_slot', { ascending: false })
+      .range(start, end);
+
+    if (error) throw new Error(`Ошибка БД: ${error.message}`);
+    return { data: data || [], count: count || 0 };
+  },
+
+  async markAsCompleted(appointmentId: number): Promise<void> {
+    const { error } = await supabase.rpc('mark_appointment_completed', {
+      p_appointment_id: appointmentId,
+    });
+    if (error) throw new Error(`Ошибка изменения статуса: ${error.message}`);
+  },
+
+  async getAppointmentById(id: number): Promise<any | null> {
+    const { data, error } = await supabase
+      .from('appointments')
+      .select('id, time_slot, client_name, client_username, client_phone, work_date, status, services(name, price, duration_minutes)')
+      .eq('id', id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw new Error(`Ошибка БД: ${error.message}`);
+    return data || null;
   },
 
   async deleteWorkingDay(dateRaw: string): Promise<void> {
@@ -114,4 +171,73 @@ export const AppointmentService = {
     if (error)
       throw new Error(`Ошибка отмены админом: ${error.message}`)
   },
+
+  async getWorkingDays(): Promise<string[]> {
+    const today = dayjs().format('YYYY-MM-DD');
+
+    const { data, error } = await supabase
+      .from('working_days')
+      .select('work_date, slots')
+      .gte('work_date', today) 
+      .order('work_date', { ascending: true });
+
+    if (error || !data) {
+      console.error('Ошибка получения списка смен:', error);
+      return [];
+    }
+
+    return data
+      .filter(row => row.slots && row.slots.length > 0)
+      .map(row => row.work_date);
+  },
+
+  // ==========================================
+  // ✂️ НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С УСЛУГАМИ
+  // ==========================================
+
+  async getServices(onlyActive: boolean = false): Promise<any[]> {
+    const { data, error } = await supabase.rpc('get_services', { p_only_active: onlyActive })
+    if (error) throw new Error(`Ошибка получения услуг: ${error.message}`)
+    return data || []
+  },
+
+  async addService(name: string, duration: number, price: number): Promise<void> {
+    const { error } = await supabase.rpc('add_service', { 
+      p_name: name, p_duration: duration, p_price: price 
+    })
+    if (error) throw new Error(`Ошибка добавления услуги: ${error.message}`)
+  },
+
+  async updateService(id: number, name: string, duration: number, price: number, isActive: boolean): Promise<void> {
+    const { error } = await supabase.rpc('update_service', { 
+      p_id: id, p_name: name, p_duration: duration, p_price: price, p_is_active: isActive 
+    })
+    if (error) throw new Error(`Ошибка обновления услуги: ${error.message}`)
+  },
+
+  async getSlotBindings(dateRaw: string): Promise<Record<string, number | null>> {
+    const date = v.parse(DateSchema, dateRaw)
+    const { data, error } = await supabase.from('slot_services').select('time_slot, service_id').eq('work_date', date)
+    if (error) return {}
+    
+    const result: Record<string, number | null> = {}
+    
+    data?.forEach(d => {
+      result[d.time_slot] = d.service_id
+    })
+    
+    return result
+  },
+
+  async bindServiceToSlot(dateRaw: string, timeRaw: string, serviceId: number | null): Promise<void> {
+    const date = v.parse(DateSchema, dateRaw)
+    const time = v.parse(TimeSchema, timeRaw)
+    const { error } = await supabase.rpc('bind_service_to_slot', {
+      p_date: date, 
+      p_time: time, 
+      // 🔥 ОБХОДИМ TYPESCRIPT: Говорим, что это number, хотя по факту там может быть null
+      p_service_id: serviceId as number 
+    })
+    if (error) throw new Error(`Ошибка привязки: ${error.message}`)
+  }
 }
