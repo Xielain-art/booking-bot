@@ -2,7 +2,8 @@ import type { Context, SessionData } from '#root/bot/context.js'
 import type { Config } from '#root/config.js'
 import type { Logger } from '#root/logger.js'
 import type { BotConfig } from 'grammy'
-import { adminFeature } from '#root/bot/features/admin.js'
+import { adminMenu } from '#root/bot/features/admin/menus/admin-main.menu.js'
+import { adminFeature } from '#root/bot/features/admin/index.js'
 import { languageFeature } from '#root/bot/features/language.js'
 import { unhandledFeature } from '#root/bot/features/unhandled.js'
 import { welcomeFeature } from '#root/bot/features/welcome.js'
@@ -64,8 +65,12 @@ export function createBot(token: string, dependencies: Dependencies, botConfig?:
       selectedDate: null,
     }),
   }))
-  protectedBot.use(conversations())
   protectedBot.use(i18n)
+
+  // ⚠️ Меню ДОЛЖНЫ быть зарегистрированы ДО conversations(), если они отправляются изнутри диалога!
+  protectedBot.use(adminMenu)
+
+  protectedBot.use(conversations())
 
   // Handlers
   protectedBot.use(welcomeFeature)
