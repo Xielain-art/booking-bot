@@ -10,6 +10,15 @@ import type { Context as DefaultContext, SessionFlavor } from 'grammy'
 export interface SessionData {
   viewedDate: string
   selectedDate: string | null
+  timeToDelete?: string | null
+  shiftMenuStartDate?: string | null
+  newShiftDate?: string | null
+  shiftsPage?: number
+  upcomingPage?: number
+  completedPage?: number
+  selectedServiceId?: number | null;
+  selectedAppointmentId?: number | null;
+  slotToBind?: string | null;
 }
 
 interface ExtendedContextFlavor {
