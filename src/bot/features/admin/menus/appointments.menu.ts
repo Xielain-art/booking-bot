@@ -102,6 +102,17 @@ export const dayAppointmentDetailsMenu = new Menu<Context>('day-appointment-deta
         await ctx.editMessageText(text, { parse_mode: "HTML" });
         ctx.menu.nav('day-details-menu');
     }).row()
+    .text((ctx) => ctx.t('menu-reschedule-appointment'), async (ctx) => {
+        const { InlineKeyboard } = await import('grammy');
+        const id = ctx.session?.selectedAppointmentId;
+        await ctx.deleteMessage();
+        await ctx.reply('🗓 <b>Перенос записи</b>\n\nНажмите кнопку ниже чтобы начать:', {
+            parse_mode: 'HTML',
+            reply_markup: new InlineKeyboard()
+                .text('📅 Начать перенос', `do_reschedule:${id}`)
+                .text('❌ Отмена', 'back_to_admin')
+        });
+    }).row()
     .text((ctx) => ctx.t('menu-cancel-appointment'), async (ctx) => {
         const id = ctx.session?.selectedAppointmentId;
         if (id) await AppointmentService.cancelByAdmin(id);
@@ -182,6 +193,17 @@ export const upcomingAppointmentDetailsMenu = new Menu<Context>('upcoming-appoin
         if (id) await AppointmentService.markAsCompleted(id);
         await ctx.editMessageText('📋 <b>Предстоящие записи:</b>', { parse_mode: "HTML" });
         ctx.menu.nav('upcoming-appointments-menu');
+    }).row()
+    .text((ctx) => ctx.t('menu-reschedule-appointment'), async (ctx) => {
+        const { InlineKeyboard } = await import('grammy');
+        const id = ctx.session?.selectedAppointmentId;
+        await ctx.deleteMessage();
+        await ctx.reply('🗓 <b>Перенос записи</b>\n\nНажмите кнопку ниже чтобы начать:', {
+            parse_mode: 'HTML',
+            reply_markup: new InlineKeyboard()
+                .text('📅 Начать перенос', `do_reschedule:${id}`)
+                .text('❌ Отмена', 'back_to_admin')
+        });
     }).row()
     .text((ctx) => ctx.t('menu-cancel-appointment'), async (ctx) => {
         const id = ctx.session?.selectedAppointmentId;
