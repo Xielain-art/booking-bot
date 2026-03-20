@@ -1,8 +1,8 @@
-import type { Context } from '#root/bot/context.js'
+import type { Context, SessionData } from '#root/bot/context.js'
 import type { Config } from '#root/config.js'
 import type { Logger } from '#root/logger.js'
 import type { BotConfig } from 'grammy'
-import { adminFeature } from '#root/bot/features/admin.js'
+import { adminFeature } from '#root/bot/features/admin/index.js'
 import { languageFeature } from '#root/bot/features/language.js'
 import { unhandledFeature } from '#root/bot/features/unhandled.js'
 import { welcomeFeature } from '#root/bot/features/welcome.js'
@@ -11,9 +11,11 @@ import { i18n, isMultipleLocales } from '#root/bot/i18n.js'
 import { session } from '#root/bot/middlewares/session.js'
 import { updateLogger } from '#root/bot/middlewares/update-logger.js'
 import { autoChatAction } from '@grammyjs/auto-chat-action'
+import { conversations } from '@grammyjs/conversations'
 import { hydrate } from '@grammyjs/hydrate'
 import { hydrateReply, parseMode } from '@grammyjs/parse-mode'
 import { sequentialize } from '@grammyjs/runner'
+import dayjs from 'dayjs'
 import { MemorySessionStorage, Bot as TelegramBot } from 'grammy'
 
 interface Dependencies {
@@ -56,9 +58,15 @@ export function createBot(token: string, dependencies: Dependencies, botConfig?:
   protectedBot.use(hydrate())
   protectedBot.use(session({
     getSessionKey,
-    storage: new MemorySessionStorage(),
+    storage: new MemorySessionStorage<SessionData>(),
+    initial: () => ({
+      viewedDate: dayjs().startOf('month').format('YYYY-MM-DD'),
+      selectedDate: null,
+    }),
   }))
   protectedBot.use(i18n)
+
+  protectedBot.use(conversations())
 
   // Handlers
   protectedBot.use(welcomeFeature)
