@@ -130,6 +130,17 @@ export const AppointmentService = {
     if (error) throw new Error(`Ошибка изменения статуса: ${error.message}`);
   },
 
+  async rescheduleAppointment(appointmentId: number, newDate: string, newTime: string): Promise<boolean> {
+    const { data: isSuccess, error } = await supabase.rpc('reschedule_appointment', {
+      p_id: appointmentId,
+      p_new_date: newDate,
+      p_new_time: newTime
+    });
+
+    if (error) throw new Error(`Ошибка переноса: ${error.message}`);
+    return isSuccess ?? false;
+  },
+
   async getAppointmentById(id: number): Promise<any | null> {
     const { data, error } = await supabase
       .from('appointments')
@@ -191,9 +202,6 @@ export const AppointmentService = {
       .map(row => row.work_date);
   },
 
-  // ==========================================
-  // ✂️ НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С УСЛУГАМИ
-  // ==========================================
 
   async getServices(onlyActive: boolean = false): Promise<any[]> {
     const { data, error } = await supabase.rpc('get_services', { p_only_active: onlyActive })
@@ -235,7 +243,6 @@ export const AppointmentService = {
     const { error } = await supabase.rpc('bind_service_to_slot', {
       p_date: date, 
       p_time: time, 
-      // 🔥 ОБХОДИМ TYPESCRIPT: Говорим, что это number, хотя по факту там может быть null
       p_service_id: serviceId as number 
     })
     if (error) throw new Error(`Ошибка привязки: ${error.message}`)
